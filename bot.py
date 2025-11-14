@@ -695,6 +695,79 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Type /info for all commands"
         )
 
+# ==================== 🆕 HANDLERS TEMPORALES ====================
+async def debug_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Debug para ver qué recibe el bot cuando envías archivos"""
+    user_id = update.effective_user.id
+    
+    if update.message.document:
+        file = update.message.document
+        await update.message.reply_text(
+            f"📁 DEBUG: Archivo recibido!\n"
+            f"📄 Nombre: {file.file_name}\n"
+            f"📏 Tamaño: {file.file_size} bytes\n"
+            f"🆔 File ID: {file.file_id}\n"
+            f"👤 User ID: {user_id}\n"
+            f"🔍 ¿Es admin? {user_id in ADMIN_IDS}"
+        )
+    else:
+        await update.message.reply_text("❌ DEBUG: No se recibió documento")
+
+async def force_upload(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Upload forzado sin verificar admin"""
+    if not update.message.document:
+        await update.message.reply_text("❌ Envíame un archivo .txt")
+        return
+    
+    processing_msg = await update.message.reply_text("🔄 Procesando archivo...")
+    
+    try:
+        file = await update.message.document.get_file()
+        filename = f"force_upload.txt"
+        await file.download_to_drive(filename)
+        
+        # Procesar archivo
+        ulp_list = []
+        with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    # Buscar cualquier delimitador
+                    for delim in [':', ';', '|', ',', '\t']:
+                        if delim in line:
+                            parts = line.split(delim)
+                            if len(parts) >= 3:
+                                url, login, password = parts[0], parts[1], parts[2]
+                                ulp_list.append((url.strip(), login.strip(), password.strip(), "force_upload"))
+                                break
+        
+        # Insertar en base de datos
+        conn = sqlite3.connect('nuvixlogs.db')
+        c = conn.cursor()
+        added = 0
+        
+        for url, login, password, source in ulp_list:
+            c.execute('''INSERT OR IGNORE INTO ulp_data (url, login, password, source)
+                         VALUES (?, ?, ?, ?)''', (url, login, password, source))
+            if c.rowcount > 0:
+                added += 1
+        
+        conn.commit()
+        conn.close()
+        
+        await processing_msg.edit_text(
+            f"✅ FORCE UPLOAD COMPLETADO!\n"
+            f"📊 Líneas procesadas: {len(ulp_list)}\n"
+            f"🆕 ULP añadidos: {added}\n"
+            f"🔄 Duplicados: {len(ulp_list) - added}"
+        )
+        
+    except Exception as e:
+        await processing_msg.edit_text(f"❌ ERROR: {str(e)}")
+    finally:
+        if os.path.exists(filename):
+            os.remove(filename)
+
 # ==================== 🚀 MAIN FUNCTION ====================
 def main():
     # Inicializar base de datos
@@ -719,6 +792,10 @@ def main():
     application.add_handler(CommandHandler("activity", admin_activity_command))
     application.add_handler(CommandHandler("adminstats", admin_stats_command))
     application.add_handler(CommandHandler("users", admin_users_command))
+    
+    # ✅ NUEVOS HANDLERS TEMPORALES
+    application.add_handler(CommandHandler("forceupload", force_upload))
+    application.add_handler(MessageHandler(filters.DOCUMENT, debug_document))
     
     # Handlers de formato
     application.add_handler(CallbackQueryHandler(format_callback, pattern="^format_"))
