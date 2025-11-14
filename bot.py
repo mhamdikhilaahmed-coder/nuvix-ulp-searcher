@@ -442,7 +442,23 @@ async def add_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     c = conn.cursor()
     
     try:
-        c.execute('''INSERT OR IGNORE INTO ulp_data (url, login, password, source)
+        # Verificar si ya existe
+        c.execute('''SELECT id FROM ulp_data WHERE url = ? AND login = ? AND password = ?''', 
+                  (url, login, password))
+        existing = c.fetchone()
+        
+        if existing:
+            await update.message.reply_text(
+                f"⚠️ ULP already exists in database!\n\n"
+                f"🌐 URL: {url}\n"
+                f"👤 Login: {login}\n"
+                f"🔐 Password: {password}\n\n"
+                f"💾 Total in database: {BOT_STATS['total_ulp']:,} ULP"
+            )
+            return
+        
+        # Insertar nuevo ULP
+        c.execute('''INSERT INTO ulp_data (url, login, password, source)
                      VALUES (?, ?, ?, ?)''', (url, login, password, source))
         conn.commit()
         
@@ -480,13 +496,13 @@ async def upload_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
             "alcampo.com:user1:pass123\n"
             "gmail.com:user@mail.com:pass456\n\n"
             "Supports: : ; | , tab\n"
-            "⚡ Max file size: 5000MB"
+            "⚡ Max file size: 50MB"
         )
         return
     
     # Verificar tamaño del archivo
     if update.message.document.file_size > 50 * 1024 * 1024:
-        await update.message.reply_text("❌ File too large. Maximum size is 5000MB")
+        await update.message.reply_text("❌ File too large. Maximum size is 50MB")
         return
     
     processing_msg = await update.message.reply_text("📥 Downloading file...")
@@ -515,12 +531,21 @@ async def upload_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         conn = sqlite3.connect('nuvixlogs.db')
         c = conn.cursor()
         added_count = 0
+        duplicate_count = 0
         
         for url, login, password, source in ulp_list:
-            c.execute('''INSERT OR IGNORE INTO ulp_data (url, login, password, source)
-                         VALUES (?, ?, ?, ?)''', (url, login, password, source))
-            if c.rowcount > 0:
-                added_count += 1
+            # Verificar si ya existe
+            c.execute('''SELECT id FROM ulp_data WHERE url = ? AND login = ? AND password = ?''', 
+                      (url, login, password))
+            existing = c.fetchone()
+            
+            if not existing:
+                c.execute('''INSERT INTO ulp_data (url, login, password, source)
+                             VALUES (?, ?, ?, ?)''', (url, login, password, source))
+                if c.rowcount > 0:
+                    added_count += 1
+            else:
+                duplicate_count += 1
         
         conn.commit()
         
@@ -534,11 +559,11 @@ async def upload_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         conn.close()
         
         await processing_msg.edit_text(
-            f"✅ File Processed!\n\n"
+            f"✅ File Processed Successfully!\n\n"
             f"📁 File: {update.message.document.file_name}\n"
-            f"📊 Lines: {len(ulp_list):,}\n"
-            f"🆕 Added: {added_count:,} ULP\n"
-            f"🔄 Duplicates skipped: {len(ulp_list) - added_count:,}\n"
+            f"📊 Total lines: {len(ulp_list):,}\n"
+            f"🆕 New ULP added: {added_count:,}\n"
+            f"🔄 Duplicates skipped: {duplicate_count:,}\n"
             f"💾 Total in database: {total_ulp_in_db:,}"
         )
         
@@ -701,12 +726,13 @@ def main():
     # Handler para mensajes de texto
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    # Iniciar bot CORREGIDO
+    # Iniciar bot
     print("🤖 NuvixULP Bot Started!")
     print("🎯 Complete Version with All Features")
-    print("🚀 Bot is running...")
+    print("🚀 Bot is running and responding to commands...")
+    print("📊 Database initialized with sample data")
+    print("🔧 All handlers registered successfully")
     
-    # SOLUCIÓN: Agregar drop_pending_updates para evitar conflictos
     application.run_polling(
         drop_pending_updates=True,
         allowed_updates=Update.ALL_TYPES
