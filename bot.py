@@ -793,9 +793,9 @@ def main():
     application.add_handler(CommandHandler("adminstats", admin_stats_command))
     application.add_handler(CommandHandler("users", admin_users_command))
     
-    # ✅ NUEVOS HANDLERS TEMPORALES
+    # ✅ NUEVOS HANDLERS TEMPORALES CORREGIDOS
     application.add_handler(CommandHandler("forceupload", force_upload))
-    application.add_handler(MessageHandler(filters.DOCUMENT, debug_document))
+    application.add_handler(MessageHandler(filters.Document.ALL, debug_document))
     
     # Handlers de formato
     application.add_handler(CallbackQueryHandler(format_callback, pattern="^format_"))
