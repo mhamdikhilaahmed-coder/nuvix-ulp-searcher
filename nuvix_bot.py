@@ -72,39 +72,38 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     await update.message.reply_text(
         f"Hello, {user.first_name}!\n\n"
-        f"use /info for showing all commands\n"
-        f"🚀 all available @NuvixULP_Bot commands:\n\n"
-        f"/search example.com\n"
-        f"(free search url:login:pass)\n\n"
-        f"/login mylogin\n"
-        f"(free search ulp by login)\n\n"
-        f"/password mypassword\n"
-        f"(free search ulp by password)\n\n"
-        f"/mail example@gmail.com\n"
-        f"(free search mail passwords)\n\n"
-        f"🔥 ALL COMMANDS ARE FREE & UNLIMITED!",
-        parse_mode='Markdown'
+        "use /info for showing all commands\n"
+        "🚀 all available @NuvixULP_Bot commands:\n\n"
+        "/search example.com\n"
+        "(free search url:login:pass)\n\n"
+        "/login mylogin\n"
+        "(free search ulp by login)\n\n"
+        "/password mypassword\n"
+        "(free search ulp by password)\n\n"
+        "/mail example@gmail.com\n"
+        "(free search mail passwords)\n\n"
+        "🔥 ALL COMMANDS ARE FREE & UNLIMITED!"
     )
 
 async def info_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     info_text = (
-        "🤖 **NuvixULP Bot - All Commands**\n\n"
-        "🔍 **FREE SEARCH COMMANDS:**\n"
-        "• `/search example.com` - Search ULP by domain\n"
-        "• `/login mylogin` - Search ULP by login\n"
-        "• `/password mypassword` - Search ULP by password\n"
-        "• `/mail example@gmail.com` - Search mail passwords\n\n"
-        "📊 **INFO COMMANDS:**\n"
-        "• `/info` - Show this message\n"
-        "• `/stats` - Bot statistics\n\n"
-        "⚡ **ALL FEATURES ARE 100% FREE!**\n"
-        "🚀 **UNLIMITED SEARCHES**"
+        "🤖 NuvixULP Bot - All Commands\n\n"
+        "🔍 FREE SEARCH COMMANDS:\n"
+        "• /search example.com - Search ULP by domain\n"
+        "• /login mylogin - Search ULP by login\n"
+        "• /password mypassword - Search ULP by password\n"
+        "• /mail example@gmail.com - Search mail passwords\n\n"
+        "📊 INFO COMMANDS:\n"
+        "• /info - Show this message\n"
+        "• /stats - Bot statistics\n\n"
+        "⚡ ALL FEATURES ARE 100% FREE!\n"
+        "🚀 UNLIMITED SEARCHES"
     )
-    await update.message.reply_text(info_text, parse_mode='Markdown')
+    await update.message.reply_text(info_text)
 
 async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("❌ Please specify domain\nExample: `/search alcampo.com`", parse_mode='Markdown')
+        await update.message.reply_text("❌ Please specify domain\nExample: /search alcampo.com")
         return
     
     query = " ".join(context.args)
@@ -117,16 +116,15 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        f"🔍 **Search:** `{query}`\n\n"
-        f"Choose strings format\n"
-        f"url:login:pass     login:pass",
-        reply_markup=reply_markup,
-        parse_mode='Markdown'
+        f"🔍 Search: {query}\n\n"
+        "Choose strings format\n"
+        "url:login:pass     login:pass",
+        reply_markup=reply_markup
     )
 
 async def login_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("❌ Please specify login\nExample: `/login admin`", parse_mode='Markdown')
+        await update.message.reply_text("❌ Please specify login\nExample: /login admin")
         return
     
     query = " ".join(context.args)
@@ -138,16 +136,15 @@ async def login_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        f"🔍 **Login Search:** `{query}`\n\n"
-        f"Choose strings format\n"
-        f"url:login:pass     login:pass",
-        reply_markup=reply_markup,
-        parse_mode='Markdown'
+        f"🔍 Login Search: {query}\n\n"
+        "Choose strings format\n"
+        "url:login:pass     login:pass",
+        reply_markup=reply_markup
     )
 
 async def password_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("❌ Please specify password\nExample: `/password 123456`", parse_mode='Markdown')
+        await update.message.reply_text("❌ Please specify password\nExample: /password 123456")
         return
     
     query = " ".join(context.args)
@@ -159,16 +156,15 @@ async def password_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        f"🔍 **Password Search:** `{query}`\n\n"
-        f"Choose strings format\n"
-        f"url:login:pass     login:pass",
-        reply_markup=reply_markup,
-        parse_mode='Markdown'
+        f"🔍 Password Search: {query}\n\n"
+        "Choose strings format\n"
+        "url:login:pass     login:pass",
+        reply_markup=reply_markup
     )
 
 async def mail_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("❌ Please specify email\nExample: `/mail user@gmail.com`", parse_mode='Markdown')
+        await update.message.reply_text("❌ Please specify email\nExample: /mail user@gmail.com")
         return
     
     query = " ".join(context.args)
@@ -180,11 +176,10 @@ async def mail_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        f"🔍 **Email Search:** `{query}`\n\n"
-        f"Choose strings format\n"
-        f"url:login:pass     login:pass",
-        reply_markup=reply_markup,
-        parse_mode='Markdown'
+        f"🔍 Email Search: {query}\n\n"
+        "Choose strings format\n"
+        "url:login:pass     login:pass",
+        reply_markup=reply_markup
     )
 
 # ==================== 🔄 MANEJADOR DE FORMATOS ====================
@@ -199,8 +194,8 @@ async def format_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Paso 1: Mostrar formato seleccionado
     position_msg = await query.edit_message_text(
-        f"🔍 **{command_type.title()} Search:** `{search_query}`\n"
-        f"✅ you choosed format: `{format_type.replace('loginpass', 'login:pass').replace('urlloginpass', 'url:login:pass')}`\n\n"
+        f"🔍 {command_type.title()} Search: {search_query}\n"
+        f"✅ you choosed format: {format_type.replace('loginpass', 'login:pass').replace('urlloginpass', 'url:login:pass')}\n\n"
         f"⏳ Your request added to query. Query position: 1"
     )
     
@@ -225,20 +220,20 @@ async def format_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Paso 3: Mostrar estadísticas
     stats_msg = await position_msg.edit_text(
-        f"🔍 **{command_type.title()} Search:** `{search_query}`\n"
-        f"✅ you choosed format: `{format_type.replace('loginpass', 'login:pass').replace('urlloginpass', 'url:login:pass')}`\n\n"
-        f"🚀 Started search: {command_type} `{search_query}`\n"
-        f"was searched `{sites_searched}` times\n\n"
-        f"📊 Found `{total_found:,}` uniq strings for {command_type} `{search_query}`."
+        f"🔍 {command_type.title()} Search: {search_query}\n"
+        f"✅ you choosed format: {format_type.replace('loginpass', 'login:pass').replace('urlloginpass', 'url:login:pass')}\n\n"
+        f"🚀 Started search: {command_type} {search_query}\n"
+        f"was searched {sites_searched} times\n\n"
+        f"📊 Found {total_found:,} uniq strings for {command_type} {search_query}."
     )
     
     await asyncio.sleep(1)
     
     if not results:
         await stats_msg.edit_text(
-            f"🔍 **{command_type.title()} Search:** `{search_query}`\n"
-            f"✅ you choosed format: `{format_type.replace('loginpass', 'login:pass').replace('urlloginpass', 'url:login:pass')}`\n\n"
-            f"❌ No results found for {command_type}: `{search_query}`"
+            f"🔍 {command_type.title()} Search: {search_query}\n"
+            f"✅ you choosed format: {format_type.replace('loginpass', 'login:pass').replace('urlloginpass', 'url:login:pass')}\n\n"
+            f"❌ No results found for {command_type}: {search_query}"
         )
         return
     
@@ -254,10 +249,10 @@ async def format_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Paso 4: Enviar resultados
     results_text = (
-        f"🔍 **{command_type.title()} Search:** `{search_query}`\n"
-        f"✅ you choosed format: `{format_type.replace('loginpass', 'login:pass').replace('urlloginpass', 'url:login:pass')}`\n\n"
-        f"📁 {command_type} `{search_query}` format `{format_type.replace('loginpass', 'login:pass').replace('urlloginpass', 'url:login:pass')}`\n\n"
-        f"📄 **File generated with** `{len(results):,}` **results**"
+        f"🔍 {command_type.title()} Search: {search_query}\n"
+        f"✅ you choosed format: {format_type.replace('loginpass', 'login:pass').replace('urlloginpass', 'url:login:pass')}\n\n"
+        f"📁 {command_type} {search_query} format {format_type.replace('loginpass', 'login:pass').replace('urlloginpass', 'url:login:pass')}\n\n"
+        f"📄 File generated with {len(results):,} results"
     )
     
     await stats_msg.edit_text(results_text)
@@ -288,14 +283,14 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.close()
     
     stats_text = (
-        f"📊 **NuvixULP Bot Statistics**\n\n"
-        f"🔐 **Total ULP:** `{total_ulp:,}`\n"
-        f"🌐 **Unique Sites:** `{unique_sites:,}`\n\n"
-        f"⚡ **Status:** ✅ ACTIVE & FREE\n"
-        f"🚀 **All features are 100% FREE!**"
+        f"📊 NuvixULP Bot Statistics\n\n"
+        f"🔐 Total ULP: {total_ulp:,}\n"
+        f"🌐 Unique Sites: {unique_sites:,}\n\n"
+        f"⚡ Status: ✅ ACTIVE & FREE\n"
+        f"🚀 All features are 100% FREE!"
     )
     
-    await update.message.reply_text(stats_text, parse_mode='Markdown')
+    await update.message.reply_text(stats_text)
 
 # ==================== 🔧 COMANDOS ADMIN ====================
 async def add_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -308,8 +303,8 @@ async def add_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "❌ Format: /addulp <url> <login> <password> [source]\n\n"
             "📝 Examples:\n"
-            "• `/addulp alcampo.com usuario123 clave456`\n"
-            "• `/addulp gmail.com user@mail.com password123`"
+            "• /addulp alcampo.com usuario123 clave456\n"
+            "• /addulp gmail.com user@mail.com password123"
         )
         return
     
@@ -327,11 +322,11 @@ async def add_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         conn.commit()
         
         await update.message.reply_text(
-            f"✅ **ULP Added Successfully!**\n\n"
-            f"🌐 **URL:** `{url}`\n"
-            f"👤 **Login:** `{login}`\n"
-            f"🔐 **Password:** `{password}`\n"
-            f"📁 **Source:** `{source}`"
+            f"✅ ULP Added Successfully!\n\n"
+            f"🌐 URL: {url}\n"
+            f"👤 Login: {login}\n"
+            f"🔐 Password: {password}\n"
+            f"📁 Source: {source}"
         )
     except Exception as e:
         await update.message.reply_text(f"❌ Error: {str(e)}")
@@ -362,7 +357,7 @@ def main():
     print("🐍 Python 3.13 Compatible Version")
     print("🚀 Bot is running...")
     
-    # SOLUCIÓN: Usar run_polling() directamente sin asyncio.run()
+    # Iniciar bot
     application.run_polling()
 
 if __name__ == "__main__":
