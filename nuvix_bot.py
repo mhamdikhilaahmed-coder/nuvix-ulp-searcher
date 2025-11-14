@@ -339,11 +339,11 @@ async def add_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         conn.close()
 
 # ==================== 🚀 MAIN FUNCTION ====================
-async def main():
+def main():
     # Inicializar base de datos
     init_db()
     
-    # Crear aplicación - VERSIÓN COMPATIBLE CON 3.13
+    # Crear aplicación
     application = Application.builder().token(BOT_TOKEN).build()
     
     # Handlers
@@ -362,8 +362,8 @@ async def main():
     print("🐍 Python 3.13 Compatible Version")
     print("🚀 Bot is running...")
     
-    # Iniciar bot
-    await application.run_polling()
+    # SOLUCIÓN: Usar run_polling() directamente sin asyncio.run()
+    application.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
