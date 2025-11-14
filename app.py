@@ -700,14 +700,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Type /info for all commands"
         )
 
-# ==================== 🤖 INICIALIZACIÓN DEL BOT ====================
+# ==================== 🤖 INICIALIZACIÓN DEL BOT CORREGIDA ====================
 def setup_bot():
     """Configura y ejecuta el bot de Telegram en un hilo separado"""
     try:
         # Inicializar base de datos
         init_db()
         
-        # Crear aplicación
+        # Crear aplicación con loop específico para el hilo
+        import asyncio
+        
+        # Crear nuevo event loop para este hilo
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
         application = Application.builder().token(BOT_TOKEN).build()
         
         # ==================== HANDLERS ====================
@@ -738,28 +744,28 @@ def setup_bot():
         print("🎯 Complete Version with All Features")
         print("🚀 Bot is running...")
         
-        # SOLUCIÓN: Agregar drop_pending_updates para evitar conflictos
-        application.run_polling(
+        # Usar el loop del hilo actual
+        loop.run_until_complete(application.run_polling(
             drop_pending_updates=True,
             allowed_updates=Update.ALL_TYPES
-        )
+        ))
         
     except Exception as e:
         logger.error(f"❌ Error starting bot: {e}")
 
-# ==================== 🌐 RUTAS FLASK ====================
+# ==================== 🌐 RUTAS FLASK CORREGIDAS ====================
 @app.route('/')
 def home():
-    return """
+    return f"""
     <html>
         <head>
             <title>🤖 NuvixULP Bot</title>
             <style>
-                body { font-family: Arial, sans-serif; margin: 40px; background: #f0f2f5; }
-                .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                h1 { color: #2c3e50; }
-                .status { background: #27ae60; color: white; padding: 10px; border-radius: 5px; }
-                .bot-link { display: inline-block; background: #3498db; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+                body {{ font-family: Arial, sans-serif; margin: 40px; background: #f0f2f5; }}
+                .container {{ max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+                h1 {{ color: #2c3e50; }}
+                .status {{ background: #27ae60; color: white; padding: 10px; border-radius: 5px; }}
+                .bot-link {{ display: inline-block; background: #3498db; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; margin: 10px 0; }}
             </style>
         </head>
         <body>
@@ -788,7 +794,7 @@ def home():
             </div>
         </body>
     </html>
-    """.format(BOT_STATS=BOT_STATS)
+    """
 
 @app.route('/health')
 def health():
