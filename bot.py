@@ -4,9 +4,14 @@ import sqlite3
 import asyncio
 import random
 import re
+import threading
+from flask import Flask, jsonify
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from datetime import datetime
+
+# ==================== 🌐 CONFIGURACIÓN FLASK ====================
+app = Flask(__name__)
 
 # Configuración
 BOT_TOKEN = os.getenv('BOT_TOKEN', '7927690342:AAFKbjYIKPsdh1FHRUctIVwDOfoFshGwNvA')
@@ -695,48 +700,167 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Type /info for all commands"
         )
 
-# ==================== 🚀 MAIN FUNCTION ====================
-def main():
-    # Inicializar base de datos
-    init_db()
-    
-    # Crear aplicación
-    application = Application.builder().token(BOT_TOKEN).build()
-    
-    # ==================== HANDLERS ====================
-    # Comandos usuarios
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("info", info_command))
-    application.add_handler(CommandHandler("search", search_command))
-    application.add_handler(CommandHandler("login", login_command))
-    application.add_handler(CommandHandler("password", password_command))
-    application.add_handler(CommandHandler("mail", mail_command))
-    application.add_handler(CommandHandler("stats", stats_command))
-    
-    # Comandos admin
-    application.add_handler(CommandHandler("addulp", add_ulp_command))
-    application.add_handler(CommandHandler("upload", upload_ulp_command))
-    application.add_handler(CommandHandler("activity", admin_activity_command))
-    application.add_handler(CommandHandler("adminstats", admin_stats_command))
-    application.add_handler(CommandHandler("users", admin_users_command))
-    
-    # Handlers de formato
-    application.add_handler(CallbackQueryHandler(format_callback, pattern="^format_"))
-    
-    # Handler para mensajes de texto
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    
-    # Iniciar bot
-    print("🤖 NuvixULP Bot Started!")
-    print("🎯 Complete Version with All Features")
-    print("🚀 Bot is running and responding to commands...")
-    print("📊 Database initialized with sample data")
-    print("🔧 All handlers registered successfully")
-    
-    application.run_polling(
-        drop_pending_updates=True,
-        allowed_updates=Update.ALL_TYPES
-    )
+# ==================== 🤖 INICIALIZACIÓN DEL BOT ====================
+def setup_bot():
+    """Configura y ejecuta el bot de Telegram"""
+    try:
+        # Inicializar base de datos
+        init_db()
+        
+        # Crear aplicación del bot
+        application = Application.builder().token(BOT_TOKEN).build()
+        
+        # ==================== HANDLERS ====================
+        # Comandos usuarios
+        application.add_handler(CommandHandler("start", start))
+        application.add_handler(CommandHandler("info", info_command))
+        application.add_handler(CommandHandler("search", search_command))
+        application.add_handler(CommandHandler("login", login_command))
+        application.add_handler(CommandHandler("password", password_command))
+        application.add_handler(CommandHandler("mail", mail_command))
+        application.add_handler(CommandHandler("stats", stats_command))
+        
+        # Comandos admin
+        application.add_handler(CommandHandler("addulp", add_ulp_command))
+        application.add_handler(CommandHandler("upload", upload_ulp_command))
+        application.add_handler(CommandHandler("activity", admin_activity_command))
+        application.add_handler(CommandHandler("adminstats", admin_stats_command))
+        application.add_handler(CommandHandler("users", admin_users_command))
+        
+        # Handlers de formato
+        application.add_handler(CallbackQueryHandler(format_callback, pattern="^format_"))
+        
+        # Handler para mensajes de texto
+        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+        
+        # Iniciar bot
+        print("🤖 NuvixULP Bot Started!")
+        print("🎯 Complete Version with All Features")
+        print("🚀 Bot is running and responding to commands...")
+        
+        application.run_polling(
+            drop_pending_updates=True,
+            allowed_updates=Update.ALL_TYPES
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Error starting bot: {e}")
 
-if __name__ == "__main__":
-    main()
+# ==================== 🌐 RUTAS FLASK ====================
+@app.route('/')
+def home():
+    """Página principal"""
+    return f"""
+    <html>
+        <head>
+            <title>🤖 NuvixULP Bot</title>
+            <style>
+                body {{ 
+                    font-family: Arial, sans-serif; 
+                    margin: 40px; 
+                    background: #f0f2f5; 
+                    text-align: center;
+                }}
+                .container {{ 
+                    max-width: 800px; 
+                    margin: 0 auto; 
+                    background: white; 
+                    padding: 30px; 
+                    border-radius: 10px; 
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+                }}
+                h1 {{ color: #2c3e50; }}
+                .status {{ 
+                    background: #27ae60; 
+                    color: white; 
+                    padding: 10px; 
+                    border-radius: 5px; 
+                    margin: 20px 0;
+                }}
+                .bot-link {{ 
+                    display: inline-block; 
+                    background: #3498db; 
+                    color: white; 
+                    padding: 15px 25px; 
+                    text-decoration: none; 
+                    border-radius: 5px; 
+                    margin: 10px 0; 
+                    font-size: 18px;
+                }}
+                .stats {{ 
+                    background: #f8f9fa; 
+                    padding: 15px; 
+                    border-radius: 5px; 
+                    margin: 20px 0;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🤖 NuvixULP Bot</h1>
+                <div class="status">✅ Bot is running and active</div>
+                
+                <div class="stats">
+                    <h2>📊 Live Statistics</h2>
+                    <p>Total ULP in database: <strong>{BOT_STATS['total_ulp']:,}</strong></p>
+                    <p>Last update: <strong>{BOT_STATS['last_update']}</strong></p>
+                </div>
+                
+                <h2>🚀 Bot Features</h2>
+                <ul style="text-align: left; display: inline-block;">
+                    <li>🔍 Free ULP searches</li>
+                    <li>🌐 Domain, login, password searches</li>
+                    <li>📊 Advanced statistics</li>
+                    <li>⚡ Unlimited usage</li>
+                </ul>
+                
+                <h2>🔗 Access the Bot</h2>
+                <a href="https://t.me/NuvixULP_Bot" class="bot-link" target="_blank">
+                    📲 Open in Telegram
+                </a>
+                
+                <p style="margin-top: 30px; color: #666;">
+                    <em>🤖 Advanced ULP Search Engine - Always Online!</em>
+                </p>
+            </div>
+        </body>
+    </html>
+    """
+
+@app.route('/health')
+def health():
+    """Endpoint de salud para Render"""
+    return jsonify({
+        "status": "healthy", 
+        "service": "nuvix-ulp-bot",
+        "bot_status": "running",
+        "total_ulp": BOT_STATS["total_ulp"],
+        "timestamp": datetime.now().isoformat()
+    })
+
+@app.route('/stats')
+def stats():
+    """Endpoint de estadísticas"""
+    return jsonify({
+        "total_ulp": BOT_STATS["total_ulp"],
+        "last_update": BOT_STATS["last_update"],
+        "status": "online",
+        "bot": "active"
+    })
+
+# ==================== 🚀 INICIO DE LA APLICACIÓN ====================
+def start_bot_in_thread():
+    """Inicia el bot en un hilo separado"""
+    bot_thread = threading.Thread(target=setup_bot)
+    bot_thread.daemon = True
+    bot_thread.start()
+    print("🤖 Bot thread started successfully!")
+
+if __name__ == '__main__':
+    # Iniciar el bot en un hilo separado
+    start_bot_in_thread()
+    
+    # Iniciar servidor Flask
+    port = int(os.environ.get('PORT', 5000))
+    print(f"🌐 Starting Flask server on port {port}...")
+    app.run(host='0.0.0.0', port=port, debug=False)
