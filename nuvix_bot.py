@@ -701,11 +701,16 @@ def main():
     # Handler para mensajes de texto
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    # Iniciar bot
+    # Iniciar bot CORREGIDO
     print("🤖 NuvixULP Bot Started!")
     print("🎯 Complete Version with All Features")
     print("🚀 Bot is running...")
-    application.run_polling()
+    
+    # SOLUCIÓN: Agregar drop_pending_updates para evitar conflictos
+    application.run_polling(
+        drop_pending_updates=True,
+        allowed_updates=Update.ALL_TYPES
+    )
 
 if __name__ == "__main__":
     main()
