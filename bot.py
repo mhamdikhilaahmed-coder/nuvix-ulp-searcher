@@ -4,14 +4,9 @@ import sqlite3
 import asyncio
 import random
 import re
-import threading
-from flask import Flask, request, jsonify
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from datetime import datetime
-
-# ==================== 🌐 CONFIGURACIÓN FLASK ====================
-app = Flask(__name__)
 
 # Configuración
 BOT_TOKEN = os.getenv('BOT_TOKEN', '7927690342:AAFKbjYIKPsdh1FHRUctIVwDOfoFshGwNvA')
@@ -422,7 +417,7 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await update.message.reply_text(stats_text)
 
-# ==================== 🔧 COMANDOS ADMIN MEJORADOS ====================
+# ==================== 🔧 COMANDOS ADMIN ====================
 async def add_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
@@ -447,23 +442,7 @@ async def add_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     c = conn.cursor()
     
     try:
-        # Verificar si ya existe el combo
-        c.execute('''SELECT id FROM ulp_data WHERE url = ? AND login = ? AND password = ?''', 
-                  (url, login, password))
-        existing = c.fetchone()
-        
-        if existing:
-            await update.message.reply_text(
-                f"⚠️ ULP already exists in database!\n\n"
-                f"🌐 URL: {url}\n"
-                f"👤 Login: {login}\n"
-                f"🔐 Password: {password}\n\n"
-                f"💾 Total in database: {BOT_STATS['total_ulp']:,} ULP"
-            )
-            return
-        
-        # Insertar nuevo ULP
-        c.execute('''INSERT INTO ulp_data (url, login, password, source)
+        c.execute('''INSERT OR IGNORE INTO ulp_data (url, login, password, source)
                      VALUES (?, ?, ?, ?)''', (url, login, password, source))
         conn.commit()
         
@@ -501,13 +480,13 @@ async def upload_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
             "alcampo.com:user1:pass123\n"
             "gmail.com:user@mail.com:pass456\n\n"
             "Supports: : ; | , tab\n"
-            "⚡ Max file size: 50MB"
+            "⚡ Max file size: 5000MB"
         )
         return
     
     # Verificar tamaño del archivo
     if update.message.document.file_size > 50 * 1024 * 1024:
-        await update.message.reply_text("❌ File too large. Maximum size is 50MB")
+        await update.message.reply_text("❌ File too large. Maximum size is 5000MB")
         return
     
     processing_msg = await update.message.reply_text("📥 Downloading file...")
@@ -536,21 +515,12 @@ async def upload_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         conn = sqlite3.connect('nuvixlogs.db')
         c = conn.cursor()
         added_count = 0
-        duplicate_count = 0
         
         for url, login, password, source in ulp_list:
-            # Verificar si ya existe
-            c.execute('''SELECT id FROM ulp_data WHERE url = ? AND login = ? AND password = ?''', 
-                      (url, login, password))
-            existing = c.fetchone()
-            
-            if not existing:
-                c.execute('''INSERT INTO ulp_data (url, login, password, source)
-                             VALUES (?, ?, ?, ?)''', (url, login, password, source))
-                if c.rowcount > 0:
-                    added_count += 1
-            else:
-                duplicate_count += 1
+            c.execute('''INSERT OR IGNORE INTO ulp_data (url, login, password, source)
+                         VALUES (?, ?, ?, ?)''', (url, login, password, source))
+            if c.rowcount > 0:
+                added_count += 1
         
         conn.commit()
         
@@ -564,11 +534,11 @@ async def upload_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         conn.close()
         
         await processing_msg.edit_text(
-            f"✅ File Processed Successfully!\n\n"
+            f"✅ File Processed!\n\n"
             f"📁 File: {update.message.document.file_name}\n"
-            f"📊 Total lines: {len(ulp_list):,}\n"
-            f"🆕 New ULP added: {added_count:,}\n"
-            f"🔄 Duplicates skipped: {duplicate_count:,}\n"
+            f"📊 Lines: {len(ulp_list):,}\n"
+            f"🆕 Added: {added_count:,} ULP\n"
+            f"🔄 Duplicates skipped: {len(ulp_list) - added_count:,}\n"
             f"💾 Total in database: {total_ulp_in_db:,}"
         )
         
@@ -700,122 +670,47 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Type /info for all commands"
         )
 
-# ==================== 🤖 INICIALIZACIÓN DEL BOT CORREGIDA ====================
-def setup_bot():
-    """Configura y ejecuta el bot de Telegram en un hilo separado"""
-    try:
-        # Inicializar base de datos
-        init_db()
-        
-        # Crear aplicación con loop específico para el hilo
-        import asyncio
-        
-        # Crear nuevo event loop para este hilo
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
-        application = Application.builder().token(BOT_TOKEN).build()
-        
-        # ==================== HANDLERS ====================
-        # Comandos usuarios
-        application.add_handler(CommandHandler("start", start))
-        application.add_handler(CommandHandler("info", info_command))
-        application.add_handler(CommandHandler("search", search_command))
-        application.add_handler(CommandHandler("login", login_command))
-        application.add_handler(CommandHandler("password", password_command))
-        application.add_handler(CommandHandler("mail", mail_command))
-        application.add_handler(CommandHandler("stats", stats_command))
-        
-        # Comandos admin
-        application.add_handler(CommandHandler("addulp", add_ulp_command))
-        application.add_handler(CommandHandler("upload", upload_ulp_command))
-        application.add_handler(CommandHandler("activity", admin_activity_command))
-        application.add_handler(CommandHandler("adminstats", admin_stats_command))
-        application.add_handler(CommandHandler("users", admin_users_command))
-        
-        # Handlers de formato
-        application.add_handler(CallbackQueryHandler(format_callback, pattern="^format_"))
-        
-        # Handler para mensajes de texto
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-        
-        # Iniciar bot CORREGIDO
-        print("🤖 NuvixULP Bot Started!")
-        print("🎯 Complete Version with All Features")
-        print("🚀 Bot is running...")
-        
-        # Usar el loop del hilo actual
-        loop.run_until_complete(application.run_polling(
-            drop_pending_updates=True,
-            allowed_updates=Update.ALL_TYPES
-        ))
-        
-    except Exception as e:
-        logger.error(f"❌ Error starting bot: {e}")
-
-# ==================== 🌐 RUTAS FLASK CORREGIDAS ====================
-@app.route('/')
-def home():
-    return f"""
-    <html>
-        <head>
-            <title>🤖 NuvixULP Bot</title>
-            <style>
-                body {{ font-family: Arial, sans-serif; margin: 40px; background: #f0f2f5; }}
-                .container {{ max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-                h1 {{ color: #2c3e50; }}
-                .status {{ background: #27ae60; color: white; padding: 10px; border-radius: 5px; }}
-                .bot-link {{ display: inline-block; background: #3498db; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; margin: 10px 0; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>🤖 NuvixULP Bot</h1>
-                <div class="status">✅ Bot is running and active</div>
-                
-                <h2>🚀 Bot Features:</h2>
-                <ul>
-                    <li>🔍 Free ULP searches</li>
-                    <li>🌐 Domain, login, password searches</li>
-                    <li>📊 Advanced statistics</li>
-                    <li>⚡ Unlimited usage</li>
-                </ul>
-                
-                <h2>🔗 Access the Bot:</h2>
-                <a href="https://t.me/NuvixULP_Bot" class="bot-link" target="_blank">
-                    📲 Open in Telegram
-                </a>
-                
-                <h2>📊 Bot Statistics:</h2>
-                <p>Total ULP in database: <strong>{BOT_STATS['total_ulp']:,}</strong></p>
-                <p>Last update: <strong>{BOT_STATS['last_update']}</strong></p>
-                
-                <p><em>🤖 Advanced ULP Search Engine!</em></p>
-            </div>
-        </body>
-    </html>
-    """
-
-@app.route('/health')
-def health():
-    return jsonify({
-        "status": "healthy", 
-        "bot": "running",
-        "total_ulp": BOT_STATS["total_ulp"],
-        "last_update": BOT_STATS["last_update"]
-    })
-
-# ==================== 🚀 INICIO DE LA APLICACIÓN ====================
-def start_bot_in_thread():
-    """Inicia el bot en un hilo separado"""
-    bot_thread = threading.Thread(target=setup_bot)
-    bot_thread.daemon = True
-    bot_thread.start()
-
-if __name__ == '__main__':
-    # Iniciar el bot en un hilo separado
-    start_bot_in_thread()
+# ==================== 🚀 MAIN FUNCTION ====================
+def main():
+    # Inicializar base de datos
+    init_db()
     
-    # Iniciar servidor Flask
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    # Crear aplicación
+    application = Application.builder().token(BOT_TOKEN).build()
+    
+    # ==================== HANDLERS ====================
+    # Comandos usuarios
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("info", info_command))
+    application.add_handler(CommandHandler("search", search_command))
+    application.add_handler(CommandHandler("login", login_command))
+    application.add_handler(CommandHandler("password", password_command))
+    application.add_handler(CommandHandler("mail", mail_command))
+    application.add_handler(CommandHandler("stats", stats_command))
+    
+    # Comandos admin
+    application.add_handler(CommandHandler("addulp", add_ulp_command))
+    application.add_handler(CommandHandler("upload", upload_ulp_command))
+    application.add_handler(CommandHandler("activity", admin_activity_command))
+    application.add_handler(CommandHandler("adminstats", admin_stats_command))
+    application.add_handler(CommandHandler("users", admin_users_command))
+    
+    # Handlers de formato
+    application.add_handler(CallbackQueryHandler(format_callback, pattern="^format_"))
+    
+    # Handler para mensajes de texto
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    
+    # Iniciar bot CORREGIDO
+    print("🤖 NuvixULP Bot Started!")
+    print("🎯 Complete Version with All Features")
+    print("🚀 Bot is running...")
+    
+    # SOLUCIÓN: Agregar drop_pending_updates para evitar conflictos
+    application.run_polling(
+        drop_pending_updates=True,
+        allowed_updates=Update.ALL_TYPES
+    )
+
+if __name__ == "__main__":
+    main()
