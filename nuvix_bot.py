@@ -480,13 +480,13 @@ async def upload_ulp_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
             "alcampo.com:user1:pass123\n"
             "gmail.com:user@mail.com:pass456\n\n"
             "Supports: : ; | , tab\n"
-            "⚡ Max file size: 50MB"
+            "⚡ Max file size: 5000MB"
         )
         return
     
     # Verificar tamaño del archivo
     if update.message.document.file_size > 50 * 1024 * 1024:
-        await update.message.reply_text("❌ File too large. Maximum size is 50MB")
+        await update.message.reply_text("❌ File too large. Maximum size is 5000MB")
         return
     
     processing_msg = await update.message.reply_text("📥 Downloading file...")
@@ -714,3 +714,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
